@@ -1,5 +1,4 @@
 #!/bin/bash
-cd ~/DropBox/Code/Spectrum/StackCopy
 echo 'Building '$1' ...'
 pasmo -1 --tapbas $1 $1.tap
 retval=$?
