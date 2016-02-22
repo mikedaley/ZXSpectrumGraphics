@@ -69,18 +69,18 @@ AttrLoop
 MainLoop 
                 ; Update the attribute buffer offset to achive scrolling attributs
                 ld      hl, (AttrBfrOffset)
-                ld      de, 32
-                add     hl, de
-                ld      (AttrBfrOffset), hl
-                ld      a, (AttrCount)
-                inc     a
-                ld      (AttrCount), a
-                cp      4
-                jp      c, KeepLooping
-                ld      a, 0
-                ld      (AttrCount), a
-                ld      hl, 0
-                ld      (AttrBfrOffset), hl
+                ld      de, 32                      ; We need to move the buffer offset one row down to make...
+                add     hl, de                      ; ...the attributes look like they are moving
+                ld      (AttrBfrOffset), hl         ; Save the new buffer offset
+                ld      a, (AttrCount)              ; Get the counter we are using to track how many rows we have moved...
+                inc     a                           ; ...and increment it 
+                ld      (AttrCount), a              ; Now save it
+                cp      4                           ; Has the counter reached 4?
+                jp      c, KeepLooping              ; If not then keep going...
+                ld      a, 0                        ; ...otherwise reset the counter...
+                ld      (AttrCount), a              ; ...and save it
+                ld      hl, 0                       ; Reset the buffer offset...
+                ld      (AttrBfrOffset), hl         ; ...and save it
 KeepLooping
                 
                 ld      ix, ObjectBall
@@ -190,7 +190,7 @@ DrawBall
                 ld      b, a
                 ld      a, (ObjectBall + BALL_Y_POS)
                 ld      c, a
-                call    DrawSprite
+                call    Draw_8x8_Sprite
                 ret
 
 ;****************************************************************************************************************
