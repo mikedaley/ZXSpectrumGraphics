@@ -42,7 +42,7 @@ AttrLoop
                 ; Move the attribute data into the attribute buffer
                 ld      de, ATTR_BUFFER             
                 ld      hl, AttributeData
-                ld      bc, 32 * 27
+                ld      bc, 32 * 27                 ; 32 bytes per row for 27 rows (24 + 3 extra rows)
                 ldir
 
                 call    0xDAF                       ; ROM Clear screen    
@@ -249,77 +249,6 @@ REPT 8                                              ; Repeat this code 8 times f
                 inc     l                           ; Move to the next byte of screen memory
 ENDM                
                 ret                                 ; All done!                
-
-;****************************************************************************************************************
-; Call with DE = Sprite data, B = X, C = Y
-;****************************************************************************************************************
-DrawSprite      
-                ; Grab the width and height of the sprite we are going to draw
-                ld      a, (de)
-                ld      (_SpriteWidth + 1), a
-                inc     de
-                ld      a, (de)
-                ld      (_SpriteHeight + 1), a
-                inc     de
-
-                ld      a, b                        ; Get the Bit rotate count (lower 3 bits of X position)
-                and     7   
-        
-                ; Load DE with the address of the sprite we need to use based on the x location offset in memory
-                ld      l, a                        ; Load A with the number of shifts needed
-                ld      h, 0                        ; Reset the HL high byte
-                add     hl, hl                      ; Double HL as the lookup table entries are words
-                add     hl, de                      ; Add base address of sprite table which is held in DE
-                ld      e, (hl)                     ; Load E with the contents of (HL)
-                inc     hl                          ; Move HL to the next byte of address in the table
-                ld      d, (hl)                     ; Load D with the high byte
-        
-                ; Work out the X offset for the screen memory address
-                ld      a, b                        ; Work out the X Offset using the shift value
-                rra
-                rra
-                rra
-                and     31
-                ld      (_XOffset + 1), a           ; Store the X Byte Offset
-        
-                ; Load IX with the first address of the y-axis lookup table
-                ld      b, 0                        ; Clear B
-                ld      ix, SCRN_ADDR_LOOKUP        ; Load IY with the lookup table address
-                add     ix, bc                      ; Increment IX by the Y pixel position
-                add     ix, bc                      ; twice as the table contains word values
-                
-_SpriteHeight   ld      b, 0                        ; Load the pixel height of the sprite (bits)
-    
-DrawRow             
-                ld      a, (ix + 0)                 ; Get the current line
-_XOffset        or      0                           ; Merge in our X Offset
-                ld      l, a                        ; Load the merged low byte in L
-                ld      h, (ix + 1)                 ; Get the high byte from the lookup table
-                inc     ix  
-                inc     ix                          ; Move to the next line which is a word away
-    
-                push    bc                          ; Save B as we will load it with the sprite width
-_SpriteWidth    ld      b, 0                        ; Load B with the number of bytes the sprite is wide
-    
-DrawColumn  
-                ld      a, (de)                     ; Grab the first byte of sprite data into A             
-                inc     de                          ; Move to the next byte of sprite data
-                xor     (hl)                        ; Merge the screen contents with the sprite data
-                ld      (hl), a                     ; Load the merged data back into the screen
-                inc     l                           ; Move to the next byte of screen memory
-                djnz    DrawColumn                  ; Draw another column if needed
-    
-                pop     bc                          ; Restore B which holds the row count
-                
-                ld      a, (de)                     ; Again for byte 2          
-                inc     de  
-                xor     (hl)                            
-                ld      (hl), a     
-                inc     l   
-                    
-                djnz    DrawRow                     ; If not zero process the next line
-    
-                ret                                 ; All done!
 
 ;****************************************************************************************************************
 ; Responsible for bouncing the ball sprite around the screen, detecting when it hits the edges of the screen
