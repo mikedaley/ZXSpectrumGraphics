@@ -68,30 +68,27 @@ AttrLoop
 ;****************************************************************************************************************
 MainLoop 
                 ; Update the attribute buffer offset to achive scrolling attributs
-                ld      hl, (AttrBfrOffset)
-                ld      de, 32                      ; We need to move the buffer offset one row down to make...
-                add     hl, de                      ; ...the attributes look like they are moving
-                ld      (AttrBfrOffset), hl         ; Save the new buffer offset
-                ld      a, (AttrCount)              ; Get the counter we are using to track how many rows we have moved...
-                inc     a                           ; ...and increment it 
-                ld      (AttrCount), a              ; Now save it
-                cp      4                           ; Has the counter reached 4?
-                jp      c, KeepLooping              ; If not then keep going...
-                ld      a, 0                        ; ...otherwise reset the counter...
-                ld      (AttrCount), a              ; ...and save it
-                ld      hl, 0                       ; Reset the buffer offset...
-                ld      (AttrBfrOffset), hl         ; ...and save it
-KeepLooping
+;                 ld      hl, (AttrBfrOffset)
+;                 ld      de, 32                      ; We need to move the buffer offset one row down to make...
+;                 add     hl, de                      ; ...the attributes look like they are moving
+;                 ld      (AttrBfrOffset), hl         ; Save the new buffer offset
+;                 ld      a, (AttrCount)              ; Get the counter we are using to track how many rows we have moved...
+;                 inc     a                           ; ...and increment it 
+;                 ld      (AttrCount), a              ; Now save it
+;                 cp      4                           ; Has the counter reached 4?
+;                 jp      c, KeepLooping              ; If not then keep going...
+;                 ld      a, 0                        ; ...otherwise reset the counter...
+;                 ld      (AttrCount), a              ; ...and save it
+;                 ld      hl, 0                       ; Reset the buffer offset...
+;                 ld      (AttrBfrOffset), hl         ; ...and save it
+; KeepLooping
                 
-                ld      ix, ObjectBall
+                ld      ix, ObjectBall              ; Point to the first ball to be moved
 REPT 19         ; Repeat this code to move all the balls rather than looping
-                call    MoveBalls
-                ld      de, 4
-                add     ix, de
+                call    MoveBalls                   ; Move the current ball
+                ld      de, 4                       ; It's 4 bytes to the next ball data structure...
+                add     ix, de                      ; ...so add that to IX
 ENDM
-
-
-
 
                 call    DrawBalls                   ; Draw all the ball sprites
 
@@ -181,25 +178,12 @@ VertLoop2
                 ret
 
 ;****************************************************************************************************************
-; Draw Ball
-; Draws the ball sprite at the location held in the ObjectBall structure
-;****************************************************************************************************************
-DrawBall 
-                ld      de, SpriteBallData          ; Point DE to the ball sprite data
-                ld      a, (ObjectBall + BALL_X_POS); Load BC with the ball sprite objects location
-                ld      b, a
-                ld      a, (ObjectBall + BALL_Y_POS)
-                ld      c, a
-                call    Draw_8x8_Sprite
-                ret
-
-;****************************************************************************************************************
 ; Draw Ball Sprite 
 ; B = X, C = Y
 ; Uses: DE, HL, BC
 ;****************************************************************************************************************
 Draw_8x8_Sprite
-                ld      a, b                        
+                ld      a, b                        ; Load A with the X pixel position
                 and     7                           ; Get the Bit rotate count (lower 3 bits of X position)
         
                 ; Load DE with the address of the sprite we need to use based on the x location offset in memory as
@@ -217,16 +201,17 @@ Draw_8x8_Sprite
                 rra
                 rra
                 rra
-                and     31
-                ld      b, a                        ; Store the X Byte Offset
-                push    bc                          ; Need to use BC so save the value in B on the stack
+                and     %00011111                   ; 31
+                ld      b, a                        ; Store the X pixel byte offset into the screen buffer
+                push    bc                          ; Save B as we will be using it to merge the X offset into the 
+                                                    ; buffer address
 
                 ; Load IX with the first address of the y-axis lookup table
                 ld      b, 0                        ; Clear B
                 ld      ix, SCRN_ADDR_LOOKUP        ; Load IY with the lookup table address
                 add     ix, bc                      ; Increment IX by the Y pixel position
                 add     ix, bc                      ; twice as the table contains word values
-                pop     bc                          ; Restore B which holds the X Byte offset
+                pop     bc                          ; Restore B which holds the X byte offset
 
 REPT 8                                              ; Repeat this code 8 times for the 8 pixles rows of a ball sprite
                 ld      a, (ix + 0)                 ; Get the current line

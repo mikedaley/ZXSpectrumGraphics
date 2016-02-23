@@ -29,7 +29,7 @@ BALL_PIXEL_WIDTH    equ         8
 
 ;*******************************************************************************************
 ; Attribute Data
-; Setup a grid of squares using differeing background colour, all with white ink.
+; Setup a grid of squares using differeing background colours all with white ink.
 ;*******************************************************************************************
 AttributeData
                     db 7, 7, 15, 15, 7, 7, 15, 15, 7, 7, 15, 15, 7, 7, 15, 15, 7, 7, 15, 15, 7, 7, 15, 15, 7, 7, 15, 15, 7, 7, 15, 7
