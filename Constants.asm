@@ -10,7 +10,7 @@ SCRN_LEFT           equ         8
 SCRN_RIGHT          equ         248
 SCRN_TOP            equ         10
 SCRN_BOTTOM         equ         193
-SCRN_ADDR_LOOKUP    equ         64896
+SCRN_ADDR_LOOKUP    equ         65024
 
 SCRN_BUFFER         equ         57856
 ATTR_BUFFER         equ         57024
@@ -26,6 +26,9 @@ BALL_YSPEED         equ         3
 ; BALL constants
 BALL_PIXEL_HEIGHT   equ         8
 BALL_PIXEL_WIDTH    equ         8
+
+BAT_PIXEL_WIDTH    equ          24
+BAT_PIXEL_HEIGHT   equ          8
 
 ;*******************************************************************************************
 ; Attribute Data
