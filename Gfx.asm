@@ -68,9 +68,9 @@ AttrLoop
 ;****************************************************************************************************************
 MainLoop 
 
-.sprites        equ     10
-.frames         equ     0
-.debug          equ     1    
+.sprites        equ     12
+.frames         equ     1
+.debug          equ     0    
 .moveAttr       equ     0
 
 IF .moveAttr
@@ -123,7 +123,7 @@ IF .frames
                 ld      hl, 0
                 ld      (0x5c78), hl
 ENDIF
-;                 call    CopyScrnBuffer              ; Copy the contents of the screen buffer to the screen file
+                call    CopyScrnBuffer              ; Copy the contents of the screen buffer to the screen file
 IF .debug
                 ld      a, 4
                 out     (254), a
@@ -142,8 +142,8 @@ REPT .sprites, .ball
                 ld      b, (hl)                     ; X-Pos       
                 inc     hl
                 ld      c, (hl)                     ; Y-Pos
-                ld      de, SpriteBatData
-                call    Draw_24x8_Sprite
+                ld      de, KnightData
+                call    Draw_16x18_Sprite
 ENDM
                 ret
 
@@ -336,7 +336,72 @@ REPT 8                                              ; Repeat this code 8 times f
                 ld      (hl), a                     ; Load the merged data back into the screen
                 inc     l                           ; Move to the next byte of screen memory
 ENDM                
+                ret                                 ; All done!   
+
+;****************************************************************************************************************
+; Draw 24x8 Sprite
+; B = X, C = Y
+; Uses: DE, HL, BC
+;****************************************************************************************************************
+Draw_16x18_Sprite
+                ld      a, b                        ; Load A with the X pixel position
+                and     7                           ; Get the Bit rotate count (lower 3 bits of X position)
+        
+                ; Load DE with the address of the sprite we need to use based on the x location offset in memory as
+                ; we are using pre-shifted sprites
+                ld      l, a                        ; Load A with the number of shifts needed
+                ld      h, 0                        ; Reset the HL high byte
+                add     hl, hl                      ; Double HL as the lookup table entries are words
+                add     hl, de                      ; Add base address of sprite table which is held in DE
+                ld      e, (hl)                     ; Load E with the contents of (HL)
+                inc     hl                          ; Move HL to the next byte of address in the table
+                ld      d, (hl)                     ; Load D with the high byte
+        
+                ; Work out the X offset of the screen memory address based on the X pixel position
+                ld      a, b                        ; Work out the X Offset using the shift value
+                rra
+                rra
+                rra
+                and     %00011111                   ; 31
+                ld      b, a                        ; Store the X pixel byte offset into the screen buffer
+                push    bc                          ; Save B as we will be using it to merge the X offset into the 
+                                                    ; buffer address
+
+                ; Load IX with the first address of the y-axis lookup table
+                ld      b, 0                        ; Clear B
+                ld      ix, SCRN_ADDR_LOOKUP        ; Load IY with the lookup table address
+                add     ix, bc                      ; Increment IX by the Y pixel position
+                add     ix, bc                      ; twice as the table contains word values
+                pop     bc                          ; Restore B which holds the X byte offset
+
+REPT 18                                              ; Repeat this code 8 times for the 8 pixles rows of a ball sprite
+                ld      a, (ix + 0)                 ; Get the current line
+                or      b                           ; Merge in our X Offset
+                ld      l, a                        ; Load the merged low byte in L
+                ld      h, (ix + 1)                 ; Get the high byte from the lookup table
+                inc     ix  
+                inc     ix                          ; Move to the next line which is a word away
+    
+                ld      a, (de)                     ; Grab the first byte of sprite data into A             
+                inc     de                          ; Move to the next byte of sprite data
+                xor     (hl)                        ; Merge the screen contents with the sprite data
+                ld      (hl), a                     ; Load the merged data back into the screen
+                inc     l                           ; Move to the next byte of screen memory
+
+                ld      a, (de)                     ; Grab the second byte of sprite data into A             
+                inc     de                          ; Move to the next row of sprite data
+                xor     (hl)                        ; Merge the screen contents with the sprite data
+                ld      (hl), a                     ; Load the merged data back into the screen
+                inc     l                           ; Move to the next byte of screen memory
+
+                ld      a, (de)                     ; Grab the third byte of sprite data into A             
+                inc     de                          ; Move to the next row of sprite data
+                xor     (hl)                        ; Merge the screen contents with the sprite data
+                ld      (hl), a                     ; Load the merged data back into the screen
+                inc     l                           ; Move to the next byte of screen memory
+ENDM                
                 ret                                 ; All done!     
+
 ;****************************************************************************************************************
 ; Responsible for bouncing the ball sprite around the screen, detecting when it hits the edges of the screen
 ; and any tile objects
@@ -498,7 +563,7 @@ GameOverText    db      16, 2, 17, 2, 22, 15, 11, 'GAME  OVER'
 ; Object data
 ;****************************************************************************************************************
 SpriteTable
-                db       10, 130,  1, -1  
+                db       10, 130,  2, -3  
                 db       20, 130,  5,  4
                 db       30, 170,  3,  4   
                 db       40,  84,  2,  6   
@@ -507,13 +572,13 @@ SpriteTable
                 db      123,  34,  2,  1   
                 db      200, 124,  3,  1   
                 db       13,  12,  4,  1   
-                db       83, 180, -5,  2   
+                db       83, 120, -5,  2   
                 db       23, 163,  4, -3   
                 db      225, 143,  3,  1   
                 db      212,  89, -2,  5   
                 db       54,  74,  1, -3   
                 db       36,  99, -2,  2   
-                db      170, 180,  3, -3   
+                db      170, 150,  3, -3   
                 db      154, 134,  4,  1   
                 db      189,  46, -5,  3   
                 db      100, 113,  6, -1  
