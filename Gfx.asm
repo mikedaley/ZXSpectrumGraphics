@@ -143,7 +143,7 @@ REPT .sprites, .ball
                 inc     hl
                 ld      c, (hl)                     ; Y-Pos
                 ld      de, KnightData
-                call    Draw_16x18_Sprite
+                call    Draw_24x18_Sprite
 ENDM
                 ret
 
@@ -343,7 +343,7 @@ ENDM
 ; B = X, C = Y
 ; Uses: DE, HL, BC
 ;****************************************************************************************************************
-Draw_16x18_Sprite
+Draw_24x18_Sprite
                 ld      a, b                        ; Load A with the X pixel position
                 and     7                           ; Get the Bit rotate count (lower 3 bits of X position)
         
