@@ -68,8 +68,8 @@ AttrLoop
 ;****************************************************************************************************************
 MainLoop 
 
-.sprites        equ     12
-.frames         equ     1
+.sprites        equ     10
+.frames         equ     0
 .debug          equ     0    
 .moveAttr       equ     0
 
