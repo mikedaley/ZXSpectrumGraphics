@@ -22,6 +22,11 @@ Init
                 ld      a, 7                        ; Set the ink colour
                 ld      (23693), a  
 
+.directScreen   equ     0                           ; If 1 then drawing is done directly to the screen file, otherwise
+                                                    ; drawing is done using a double buffer and stack based copy
+
+IF !.directScreen
+
                 ; Create the y-axis screen memory lookup table
                 ld      hl, SCRN_ADDR_LOOKUP
                 ld      de, SCRN_BUFFER
@@ -37,6 +42,7 @@ _YLookupLoop    ld      (hl), e
                 ld      e, l
                 pop     hl
                 djnz    _YLookupLoop
+ENDIF
 
 AttrLoop
                 ; Move the attribute data into the attribute buffer
@@ -123,7 +129,11 @@ IF .frames
                 ld      hl, 0
                 ld      (0x5c78), hl
 ENDIF
+
+IF !.directScreen
                 call    CopyScrnBuffer              ; Copy the contents of the screen buffer to the screen file
+ENDIF
+
 IF .debug
                 ld      a, 4
                 out     (254), a
