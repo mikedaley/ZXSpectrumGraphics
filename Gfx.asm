@@ -49,15 +49,15 @@ AttrLoop
 
                 ld      de, ScoreLabelText
                 ld      bc, 10
-                call    0x203C                      ; ROM Print Screen
+;                 call    0x203C                      ; ROM Print Screen
 
                 ld      de, ScoreText
                 ld      bc, 12
-                call    0x203C                      ; ROM Print Screen
+;                 call    0x203C                      ; ROM Print Screen
 
                 ld      de, LivesLabelText
                 ld      bc, 10
-                call    0x203C                      ; ROM Print Screen
+;                 call    0x203C                      ; ROM Print Screen
 
                 call    DrawBorders
 
@@ -70,7 +70,7 @@ MainLoop
 
 .sprites        equ     10
 .frames         equ     0
-.debug          equ     0    
+.debug          equ     0   
 .moveAttr       equ     0
 
 IF .moveAttr
@@ -129,6 +129,8 @@ IF .debug
                 out     (254), a
 ENDIF
                 call    DrawSprites                 ; Draw the sprites again to remove them from the screen (XOR)
+
+;                 call    MoveScreenLeft
 
                 jp      MainLoop
 
@@ -438,6 +440,82 @@ _BounceY
                 ret
 
 ;****************************************************************************************************************
+; Scroll the entire screen left
+;****************************************************************************************************************
+MoveScreenLeft
+                ld      hl, 16384 + 6144
+                ld      b, 128
+                and     a
+_Rotate
+                call    _Rotate1
+                djnz    _Rotate
+                ret
+
+_Rotate1
+REPT 32
+                rl      (hl)     
+                dec     hl
+ENDM
+                ret
+
+; Scroll Message
+scrol  ld hl,SCROLL_POS         ; top right of window to scroll - line 23.
+       push hl
+       ld b,1              ; 8 pixel rows.
+scrl1  push bc
+       push hl
+       ld b,32             ; 32 chars wide.
+       and a               ; reset carry flag.
+scrl0  rl (hl)             ; rotate left.
+       dec l               ; char left.
+       djnz scrl0          ; repeat.
+       pop hl
+       inc h
+       pop bc
+       djnz scrl1
+       ld hl,(txtpos)
+       ld a,(hl)
+       pop hl
+       rlca
+       rlca
+       rlca                ; multiply by 8 to find char.
+       ld b,a
+       and 3
+       add a,60            ; ROM font starts here.
+       ld d,a
+       ld a,b
+       and 248
+       ld e,a
+       ld a,(txtbit)
+       ld c,a
+       ld b,8
+scrl3  ld a,(de)           ; get image of char line.
+       and c               ; test relevant bit of char.
+       jr z,scrl2          ; not set - skip.
+       inc (hl)            ; set bit.
+scrl2  inc h               ; next line of window.
+       inc de              ; next line of char.
+       djnz scrl3
+       ld hl,txtbit
+       rrc (hl)            ; next bit of char to use.
+       ret nc
+       ld hl,(txtpos)      ; text pointer.
+       inc hl              ; next character in message.
+       ld a,(hl)           ; what is it?
+       inc a               ; end of message?
+       jr nz,scrl4         ; not yet - continue.
+       ld hl,text          ; start of scrolling message.
+scrl4  ld (txtpos),hl      ; new text pointer position.
+       ret
+
+
+txtbit defb 128
+txtpos defw text
+text   defb 'Hmmm, this is a test scrolling message, not sure what to say really '
+       defb 'but I may as well put something :o)                               '
+       defb 255
+
+;****************************************************************************************************************
 ; Copy the screen buffer to the screen file using a Stack based approach.
 ; Original code written by Andrew Owen in Bob.asm that was downloaded from the Z80 Assembly
 ; Programming for the ZX Spectrum Facebook group.
@@ -451,18 +529,18 @@ CopyScrnBuffer
                 ld      (ScrnStackPtr), sp          ; Save the current SP 
 
                 ; First off we copy over the attribute data
-REPT 46, .attr               
-                ld      ix, ATTR_BUFFER + 768 - 16 - (.attr * 16)
+; REPT 46, .attr               
+;                 ld      ix, ATTR_BUFFER + 768 - 16 - (.attr * 16)
                                         
-                ld      de, (AttrBfrOffset)         ; Grab the offset to use when reading the attributes
-                add     ix, de                      ; and add it to the base buffer location for a scroll effect
+;                 ld      de, (AttrBfrOffset)         ; Grab the offset to use when reading the attributes
+;                 add     ix, de                      ; and add it to the base buffer location for a scroll effect
 
-                ld      iy, 16384 + 6912 - (.attr * 16)  ; IY points to the last byte of screen memory
+;                 ld      iy, 16384 + 6912 - (.attr * 16)  ; IY points to the last byte of screen memory
 
-                ld      hl, $ + 9                   ; set return location (no stack available)
-                ld      (EndCall), hl           
-                jp      Blit                        ; call blit
-ENDM
+;                 ld      hl, $ + 9                   ; set return location (no stack available)
+;                 ld      (EndCall), hl           
+;                 jp      Blit                        ; call blit
+; ENDM
 
 REPT 8, .row
 REPT 8, .cell
@@ -520,12 +598,12 @@ Blit
                 exx                             ; Switch to the alternate registers
                 pop     af
                 pop     bc
-                pop     de
-                pop     hl                      ; Now stored 16 bytes of data
+;                 pop     de
+;                 pop     hl                      ; Now stored 16 bytes of data
                 
                 ld      sp, iy                  ; Swith the Stack Pointer to the screen file
-                push    hl                      ; Write the bytes on the stack into the screen file
-                push    de
+;                 push    hl                      ; Write the bytes on the stack into the screen file
+;                 push    de
                 push    bc
                 push    af
                 ex      af, af'
@@ -563,16 +641,16 @@ GameOverText    db      16, 2, 17, 2, 22, 15, 11, 'GAME  OVER'
 ; Object data
 ;****************************************************************************************************************
 SpriteTable
-                db       10, 130,  2, -3  
-                db       20, 130,  2,  4
-                db       30, 170,  3,  4   
-                db       40,  84,  2,  2   
-                db       50, 100,  4,  1   
-                db       90,  60,  4,  1
-                db      123,  34,  2,  1   
-                db      200, 124,  3,  1   
-                db       13,  12,  4,  1   
-                db       83, 120, -2,  2   
+                db       10, 24,  1, 0  
+                db       20, 130,  -1, 0
+                db       30, 170,  1,  0   
+                db       40,  84,  -1,  0   
+                db       50, 100,  1,  0   
+                db       90,  60,  4,  0
+                db      123,  34,  2,  0   
+                db      200, 124,  3,  0   
+                db       13,  12,  4,  0   
+                db       83, 120, -2,  0   
                 db       23, 163,  4, -3   
                 db      225, 143,  3,  1   
                 db      212,  89, -2,  3   
